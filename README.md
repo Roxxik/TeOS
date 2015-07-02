@@ -3,7 +3,7 @@ small toy os
 
 # How to Build
 WIP
-feel free to contact me for everything related to this
+feel free to contact me for everything related to this repo
 you'll need
 
     libcore
