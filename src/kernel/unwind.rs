@@ -1,5 +1,6 @@
+//taken from https://github.com/thepowersgang/rust-barebones-kernel
+
 #[lang="panic_fmt"]
-#[allow(unused_variables)]
 #[no_mangle]
 pub fn rust_begin_unwind(args: ::core::fmt::Arguments, file: &str, line: usize) -> !
 {

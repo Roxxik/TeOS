@@ -27,11 +27,13 @@ BOOT=src/boot/boot.s
 QEMU=qemu-system-i386
 QEMUFLAGS=
 
-BOCHS=bochs
-
 BIN = kernel.bin
 
 .PHONY: all run debug clean
+
+#from http://wiki.osdev.org/Makefile
+#todolist:
+#	-@for file in $(ALLFILES:Makefile=); do fgrep -H -e TODO -e FIXME $$file; done; true
 
 all: $(BIN)
 
@@ -41,12 +43,8 @@ run: all
 clean:
 	rm -f $(OBJS) $(BIN)
 
-
 $(BIN): $(OBJS) $(LINKSCRIPT) $(TARGET)
 	$(LD) -o $@ $(LINKFLAGS) $(OBJS)
-
-$(LIBCORESRC):
-	cp -r ../rust/src/libcore .
 
 $(LIBCORE): $(LIBCORESRC) $(TARGETSPEC)
 	$(RUSTC) $(RUSTFLAGS) -o $@ --crate-type=lib --emit=link $(LIBCORESRC)

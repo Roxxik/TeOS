@@ -1,3 +1,5 @@
+//taken from https://github.com/thepowersgang/rust-barebones-kernel
+
 macro_rules! log{
 	( $($arg:tt)* ) => ({
 		// Import the Writer trait (required by write!)
