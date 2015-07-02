@@ -34,41 +34,42 @@ stack_top:
 .global _start
 .type _start, @function
 _start:
-	# To set up a stack, we simply set the esp register to point to the top of
-	# our stack (as it grows downwards).
-	movl $stack_top, %esp
+    # To set up a stack, we simply set the esp register to point to the top of
+    # our stack (as it grows downwards).
+    movl $stack_top, %esp
 
-	movl $0, %gs:0x30 # needed for rust
-	# We are now ready to actually execute C code. We cannot embed that in an
-	# assembly file, so we'll create a kernel.c file in a moment. In that file,
-	# we'll create a C entry point called kernel_main and call it here.
-	pushl %ebx # push multiboot_info
-        pushl %eax # push magic
-	call enable_sse
-	call main
+    movl $0, %gs:0x30 # needed for rust
+    # We are now ready to actually execute C code. We cannot embed that in an
+    # assembly file, so we'll create a kernel.c file in a moment. In that file,
+    # we'll create a C entry point called kernel_main and call it here.
+    pushl %ebx # push multiboot_info
+    pushl %eax # push magic
 
-	# In case the function returns, we'll want to put the computer into an
-	# infinite loop. To do that, we use the clear interrupt ('cli') instruction
-	# to disable interrupts, the halt instruction ('hlt') to stop the CPU until
-	# the next interrupt arrives, and jumping to the halt instruction if it ever
-	# continues execution, just to be safe. We will create a local label rather
-	# than real symbol and jump to there endlessly.
-	cli
-	hlt
+    call enable_sse
+    call kmain
+
+    # In case the function returns, we'll want to put the computer into an
+    # infinite loop. To do that, we use the clear interrupt ('cli') instruction
+    # to disable interrupts, the halt instruction ('hlt') to stop the CPU until
+    # the next interrupt arrives, and jumping to the halt instruction if it ever
+    # continues execution, just to be safe. We will create a local label rather
+    # than real symbol and jump to there endlessly.
+    cli
+    hlt
 .Lhang:
-	jmp .Lhang
+    jmp .Lhang
 
 
 enable_sse:
-	movl %cr0, %eax
-	andl $0xfffffffb, %eax
-	orl $0x2, %eax
-	movl %eax, %cr0
-	movl %cr4, %eax
-	orl $0x200, %eax
-	orl $0x400, %eax
-	movl %eax, %cr4
-	ret
+    movl %cr0, %eax
+    andl $0xfffffffb, %eax
+    orl $0x2, %eax
+    movl %eax, %cr0
+    movl %cr4, %eax
+    orl $0x200, %eax
+    orl $0x400, %eax
+    movl %eax, %cr4
+    ret
 
 # Set the size of the _start symbol to the current location '.' minus its start.
 # This is useful when debugging or when you implement call tracing.
