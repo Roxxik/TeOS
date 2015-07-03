@@ -18,22 +18,30 @@ RLIBCSRC=rlibc/src/lib.rs
 RLIBC=librlibc.rlib
 
 
-SRCS=$(wildcard src/kernel/*.rs)
+SRCS=$(wildcard src/*.rs src/drivers/*.rs src/kernel/*.rs)
 
 OBJS=kernel.o boot.o $(LIBCORE) $(RLIBC)
-MAIN=src/kernel/main.rs
+MAIN=src/mod.rs
 BOOT=src/boot/boot.s
 
 QEMU=qemu-system-i386
 QEMUFLAGS=
 
-BIN = kernel.bin
+BIN = teos.kernel
 
 .PHONY: all run debug clean
 
 #from http://wiki.osdev.org/Makefile
 #todolist:
 #	-@for file in $(ALLFILES:Makefile=); do fgrep -H -e TODO -e FIXME $$file; done; true
+
+#for image
+
+#mkdir -p iso/boot/grub
+#cp $(BIN) iso/boot/
+#cp $(GRUBCFG) iso/boot/grub/
+#grub-mkrescue -d /usr/lib/grub/i386-pc/ -o teos.iso iso/
+
 
 all: $(BIN)
 

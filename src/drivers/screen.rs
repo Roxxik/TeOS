@@ -1,5 +1,7 @@
 pub use prelude::*;
 use core::fmt;
+use super::io::{inb, outb};
+
 
 static VIDEO_ADDRESS: u32 = 0xB8000;
 static MAX_ROWS: u8 = 25;
@@ -13,54 +15,6 @@ static REG_SCREEN_DATA: u16 = 0x3D5;
 extern {
     fn memcpy(dest: *mut u8, src: *const u8, n: usize) -> *mut u8;
     fn memset(s: *mut u8, c: i32, n: usize) -> *mut u8;
-}
-
-/// Write a byte to the specified port
-#[allow(dead_code)]
-unsafe fn outb(port: u16, val: u8)
-{
-	asm!("outb %al, %dx" : : "{dx}"(port), "{al}"(val));
-}
-
-/// Read a single byte from the specified port
-#[allow(dead_code)]
-unsafe fn inb(port: u16) -> u8
-{
-	let ret : u8;
-	asm!("inb %dx, %al" : "={ax}"(ret) : "{dx}"(port));
-	return ret;
-}
-
-/// Write a word (16-bits) to the specified port
-#[allow(dead_code)]
-unsafe fn outw(port: u16, val: u16)
-{
-	asm!("outb %ax, %dx" : : "{dx}"(port), "{al}"(val));
-}
-
-/// Read a word (16-bits) from the specified port
-#[allow(dead_code)]
-unsafe fn inw(port: u16) -> u16
-{
-	let ret : u16;
-	asm!("inb %dx, %ax" : "={ax}"(ret) : "{dx}"(port));
-	return ret;
-}
-
-/// Write a long/double-word (32-bits) to the specified port
-#[allow(dead_code)]
-unsafe fn outl(port: u16, val: u32)
-{
-	asm!("outb %eax, %dx" : : "{dx}"(port), "{al}"(val));
-}
-
-/// Read a long/double-word (32-bits) from the specified port
-#[allow(dead_code)]
-unsafe fn inl(port: u16) -> u32
-{
-	let ret : u32;
-	asm!("inb %dx, %eax" : "={ax}"(ret) : "{dx}"(port));
-	return ret;
 }
 
 unsafe fn print_char(c: u8, attr: Option<u8>, pos: Option<(u8,u8)>) {
