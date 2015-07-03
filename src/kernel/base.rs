@@ -1,9 +1,10 @@
 pub use prelude::*;
 
+
+#[cfg(target_arch="x86_64")]
+#[lang="start"]
 #[no_mangle]
-#[allow(unused_variables)]
-pub extern "C" fn kmain(magic: u32, info: *mut u8) -> ! {
-    ::drivers::screen::clear();
-    log!("Hello");
+pub fn kmain() {
+    log_serial!("Hello");
     loop{}
 }

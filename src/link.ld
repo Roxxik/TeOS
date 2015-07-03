@@ -1,50 +1,44 @@
-/* Taken verbatim from http://wiki.osdev.org/Bare_Bones */
-/* The bootloader will look at this image and start execution at the symbol
- *designated as the entry point. */
-ENTRY(_start)
+ENTRY(start)
+OUTPUT_FORMAT(elf64-x86-64)
 
-/* Tell where the various sections of the object files will be put in the final
- *kernel image. */
-SECTIONS
-{
-  /* VGA, cannot use section for this */
-  . = 0xb8000;
-  vga_buffer = .;
-  . += 80 * 25 * 2;
+KERNEL_BASE = 0xFFFFFFFF80000000;
 
-  /* Begin putting sections at 1 MiB, a conventional place for kernels to be
-   *loaded at by the bootloader. */
-  . = 1M;
+SECTIONS {
 
-  /* First put the multiboot header, as it is required to be put very early
-   * early in the image or the bootloader won't recognize the file format.
-   * Next we'll put the .text section. */
-  .text BLOCK(4K) : ALIGN(4K)
-  {
-    *(.multiboot)
-    *(.text)
-  }
+	. = 0x100000;
 
-  /* Read-only data. */
-  .rodata BLOCK(4K) : ALIGN(4K)
-  {
-    *(.rodata)
-  }
+	. += SIZEOF_HEADERS;
 
-  /* Read-write data (initialized) */
-  .data BLOCK(4K) : ALIGN(4K)
-  {
-    *(.data)
-  }
+	.init : AT(ADDR(.init)) {
+		KEEP( *(.multiboot) )
+		*(.inittext)
+	}
 
-  /* Read-write data (uninitialized) and stack */
-  .bss BLOCK(4K) : ALIGN(4K)
-  {
-    *(COMMON)
-    *(.bss)
-    *(.bootstrap_stack)
-  }
+	. += KERNEL_BASE;
 
-  /* The compiler may produce other sections, by default it will put them in
-   *a segment with the same name. Simply add stuff here as needed. */
+	.text ALIGN(0x1000) : AT(ADDR(.text) - KERNEL_BASE) {
+		*(.text .text.*)
+	}
+
+	/* read-only data, page aligned to allow use of the no-execute feature */
+	.rodata ALIGN(0x1000) : AT(ADDR(.rodata) - KERNEL_BASE) {
+		*(.rodata .rodata.*)
+	}
+
+	/* Read-write data, page aligned for the .padata section */
+	.data ALIGN(0x1000) : AT(ADDR(.data) - KERNEL_BASE) {
+		*(.padata)
+		*(.data .data.*)
+	}
+
+	/* Zero-initialised data */
+	.bss : AT(ADDR(.bss) - KERNEL_BASE) {
+		*(.bss .bss.*)
+	}
+
+	kernel_end = .;
+
+	/DISCARD/ : {
+		*(.note .note.*)
+	}
 }

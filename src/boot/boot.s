@@ -1,77 +1,192 @@
-.globl main
-#Taken from https://github.com/ryanra/RustOS
-# Taken with small additions from http://wiki.osdev.org/Bare_Bones
-# Declare constants used for creating a multiboot header.
-.set ALIGN,    1<<0             # align loaded modules on page boundaries
-.set MEMINFO,  1<<1             # provide memory map
-.set FLAGS,    ALIGN | MEMINFO  # this is the Multiboot 'flag' field
-.set MAGIC,    0x1BADB002       # 'magic number' lets bootloader find the header
-.set CHECKSUM, -(MAGIC + FLAGS) # checksum of above, to prove we are multiboot
+/* The kernel is linked to run at -2GB. This allows efficient addressing */
+KERNEL_BASE = 0xFFFFFFFF80000000
 
-# Declare a header as in the Multiboot Standard. We put this into a special
-# section so we can force the header to be in the start of the final program.
-# You don't need to understand all these details as it is just magic values that
-# is documented in the multiboot standard. The bootloader will search for this
-# magic sequence and recognize us as a multiboot kernel.
-.section .multiboot
-.align 4
-.long MAGIC
-.long FLAGS
-.long CHECKSUM
+/* === Multiboot Header === */
+MULTIBOOT_PAGE_ALIGN  =  (1<<0)
+MULTIBOOT_MEMORY_INFO =  (1<<1)
+MULTIBOOT_HEADER_MAGIC =  0x1BADB002
+MULTIBOOT_HEADER_FLAGS = (MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO)
+MULTIBOOT_CHECKSUM     = -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS)
+.section .multiboot, "a"
+.globl mboot
+mboot:
+    .long MULTIBOOT_HEADER_MAGIC
+    .long MULTIBOOT_HEADER_FLAGS
+    .long MULTIBOOT_CHECKSUM
+    .long mboot
+    /* a.out kludge (not used, the kernel is elf) */
+    .long 0, 0, 0, 0    /* load_addr, load_end_addr, bss_end_addr, entry_addr */
+    /* Video mode */
+    .long 0     /* Mode type (0: LFB) */
+    .long 0     /* Width (no preference) */
+    .long 0     /* Height (no preference) */
+    .long 0     /* Depth (32-bit preferred) */
 
-# Currently the stack pointer register (esp) points at anything and using it may
-# cause massive harm. Instead, we'll provide our own stack. We will allocate
-# room for a small temporary stack by creating a symbol at the bottom of it,
-# then allocating 16384 bytes for it, and finally creating a symbol at the top.
-.section .bootstrap_stack, "aw", @nobits
-stack_bottom:
-.skip 16384 # 16 KiB
-stack_top:
+#define DEBUG(c)    mov $0x3f8, %dx ; mov $c, %al ; outb %al, %dx
 
-# The linker script specifies _start as the entry point to the kernel and the
-# bootloader will jump to this position once the kernel has been loaded. It
-# doesn't make sense to return from this function as the bootloader is gone.
+/* === Code === */
+.section .inittext, "ax"
+.globl start
+.code32
+start:
+    /* The kernel starts in protected mode (32-bit mode, we want to switch to long mode) */
+
+    /* 1. Save multiboot state */
+    mov %eax, mboot_sig - KERNEL_BASE
+    mov %ebx, mboot_ptr - KERNEL_BASE
+
+    /* 2. Ensure that the CPU support long mode */
+    mov $0x80000000, %eax
+    cpuid
+    /* - Check if CPUID supports the field we want to query */
+    cmp $0x80000001, %eax
+    jbe not64bitCapable
+    /* - Test the IA-32e bit */
+    mov $0x80000001, %eax
+    cpuid
+    test $0x20000000, %edx /* bit 29 = */
+    jz not64bitCapable
+
+    /* 3. Set up state for long mode */
+    /* Enable:
+        PGE (Page Global Enable)
+      + PAE (Physical Address Extension)
+      + PSE (Page Size Extensions)
+    */
+    mov %cr4, %eax
+    or $(0x80|0x20|0x10), %eax
+    mov %eax, %cr4
+
+    /* Load PDP4 */
+    mov $(init_pml4 - KERNEL_BASE), %eax
+    mov %eax, %cr3
+
+    /* Enable IA-32e mode (Also enables SYSCALL and NX) */
+    mov $0xC0000080, %ecx
+    rdmsr
+    or $(1 << 11)|(1 << 8)|(1 << 0), %eax     /* NXE, LME, SCE */
+    wrmsr
+
+    /* Enable paging and enter long mode */
+    mov %cr0, %eax
+    or $0x80010000, %eax      /* PG & WP */
+    mov %eax, %cr0
+    lgdt GDTPtr_low - KERNEL_BASE
+    ljmp $0x08, $start64
+
+
+not64bitCapable:
+    /* If the CPU isn't 64-bit capable, print a message to serial/b8000 then busy wait */
+    mov $0x3f8, %dx
+    mov $'N', %al ; outb %al, %dx
+    movw $0x100|'N', 0xb8000
+    mov $'o', %al ; outb %al, %dx
+    movw $0x100|'o', 0xb8002
+    mov $'t', %al ; outb %al, %dx
+    movw $0x100|'t', 0xb8004
+    mov $'6', %al ; outb %al, %dx
+    movw $0x100|'6', 0xb8006
+    mov $'4', %al ; outb %al, %dx
+    movw $0x100|'4', 0xb8008
+
+not64bitCapable.loop:
+    hlt
+    jmp not64bitCapable.loop
+.code64
+.globl start64
+start64:
+    /* Running in 64-bit mode, jump to high memory */
+    lgdt GDTPtr
+    mov $start64_high, %rax
+    jmp *%rax
+
 .section .text
-.global _start
-.type _start, @function
-_start:
-    # To set up a stack, we simply set the esp register to point to the top of
-    # our stack (as it grows downwards).
-    movl $stack_top, %esp
+.extern kmain
+.globl start64_high
+start64_high:
+    /* and clear low-memory mapping */
+    mov $0, %rax
+    mov %rax, init_pml4 - KERNEL_BASE + 0
 
-    movl $0, %gs:0x30 # needed for rust
-    # We are now ready to actually execute C code. We cannot embed that in an
-    # assembly file, so we'll create a kernel.c file in a moment. In that file,
-    # we'll create a C entry point called kernel_main and call it here.
-    pushl %ebx # push multiboot_info
-    pushl %eax # push magic
+    /* Set up segment registers */
+    mov $0x10, %ax
+    mov %ax, %ss
+    mov %ax, %ds
+    mov %ax, %es
+    mov %ax, %fs
+    mov %ax, %gs
 
-    call enable_sse
+    /* Set up stack pointer */
+    mov $init_stack, %rsp
+
+    /* call the rust code */
     call kmain
 
-    # In case the function returns, we'll want to put the computer into an
-    # infinite loop. To do that, we use the clear interrupt ('cli') instruction
-    # to disable interrupts, the halt instruction ('hlt') to stop the CPU until
-    # the next interrupt arrives, and jumping to the halt instruction if it ever
-    # continues execution, just to be safe. We will create a local label rather
-    # than real symbol and jump to there endlessly.
-    cli
+    /* and if that returns (it shouldn't) loop forever */
+start64.loop:
     hlt
-.Lhang:
-    jmp .Lhang
+    jmp start64.loop
 
 
-enable_sse:
-    movl %cr0, %eax
-    andl $0xfffffffb, %eax
-    orl $0x2, %eax
-    movl %eax, %cr0
-    movl %cr4, %eax
-    orl $0x200, %eax
-    orl $0x400, %eax
-    movl %eax, %cr4
-    ret
 
-# Set the size of the _start symbol to the current location '.' minus its start.
-# This is useful when debugging or when you implement call tracing.
-.size _start, . - _start
+/* === Page-aligned data === */
+.section .padata
+.globl init_pd
+.globl init_pml4
+/* Initial paging structures, four levels */
+/* The +3 for sub-pages indicates "present (1) + writable (2)" */
+init_pml4:
+    .quad low_pdpt - KERNEL_BASE + 3    /* low map for startup, will be cleared before rust code runs */
+    .rept 512 - 3
+       .quad 0
+    .endr
+    .quad 0     /* If you so wish, this is a good place for the "Fractal" mapping */
+    .quad init_pdpt - KERNEL_BASE + 3    /* Final mapping */
+low_pdpt:
+    .quad init_pd - KERNEL_BASE + 3    /* early init identity map */
+    .rept 512 - 1
+        .quad 0
+    .endr
+init_pdpt:    /* covers the top 512GB, 1GB each entry */
+    .rept 512 - 2
+       .quad 0
+    .endr
+    .quad init_pd - KERNEL_BASE + 3    /* at -2GB, identity map the kernel image */
+    .quad 0
+init_pd:
+    /* 0x80 = Page size extension */
+    .quad 0x000000 + 0x80 + 3    /* Map 2MB, enough for a 1MB kernel */
+    .quad 0x200000 + 0x80 + 3    /* - give it another 2MB, just in case */
+    .rept 512 - 2
+        .quad 0
+    .endr
+init_stack_base:
+    .rept 0x1000 * 60
+        .byte 0
+    .endr
+init_stack:
+
+/* === General Data === */
+.section .data
+.globl mboot_sig
+.globl mboot_ptr
+mboot_sig:    .quad 0
+mboot_ptr:    .quad 0
+
+/* Global Descriptor Table */
+GDTPtr_low:
+    .word GDT - GDTEnd
+    .long GDT - KERNEL_BASE
+GDTPtr:
+    .word GDT - GDTEnd
+    .quad GDT
+.globl GDT
+GDT:
+        .long 0, 0
+        .long 0x00000000, 0x00209A00    /* 0x08: 64-bit Code */
+        .long 0x00000000, 0x00009200    /* 0x10: 64-bit Data */
+        .long 0x00000000, 0x0040FA00    /* 0x18: 32-bit User Code */
+        .long 0x00000000, 0x0040F200    /* 0x20: User Data        */
+        .long 0x00000000, 0x0020FA00    /* 0x28: 64-bit User Code       */
+        .long 0x00000000, 0x0000F200    /* 0x30: User Data (64 version) */
+GDTEnd:

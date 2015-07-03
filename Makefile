@@ -1,7 +1,7 @@
 RUSTC = rustc
-ARCH = x86
-LD=ld -melf_i386 -nostdlib
-AS=as -march=i386 --32
+ARCH = x86_64
+LD=ld -nostdlib
+AS=as --64
 TARGET = src/target.json
 LINKSCRIPT = src/link.ld
 
@@ -9,7 +9,9 @@ LINKFLAGS = -T $(LINKSCRIPT)
 LINKFLAGS += --gc-sections
 LINKFLAGS += -z max-page-size=0x1000
 
-RUSTFLAGS = -g -O --cfg arch__$(ARCH) --target=$(TARGET)
+ASFLAGS=
+
+RUSTFLAGS = -g --cfg arch__$(ARCH) --target=$(TARGET)
 
 LIBCORESRC=libcore/lib.rs
 LIBCORE=libcore.rlib
@@ -24,8 +26,13 @@ OBJS=kernel.o boot.o $(LIBCORE) $(RLIBC)
 MAIN=src/mod.rs
 BOOT=src/boot/boot.s
 
-QEMU=qemu-system-i386
-QEMUFLAGS=
+QEMU=qemu-system-x86_64
+QEMUFLAGS=-serial stdio
+
+GRUBCFG=src/boot/grub.cfg
+
+ISO=teos.iso
+BUILDDIR=build/
 
 BIN = teos.kernel
 
@@ -35,21 +42,23 @@ BIN = teos.kernel
 #todolist:
 #	-@for file in $(ALLFILES:Makefile=); do fgrep -H -e TODO -e FIXME $$file; done; true
 
-#for image
-
-#mkdir -p iso/boot/grub
-#cp $(BIN) iso/boot/
-#cp $(GRUBCFG) iso/boot/grub/
-#grub-mkrescue -d /usr/lib/grub/i386-pc/ -o teos.iso iso/
-
 
 all: $(BIN)
 
-run: all
-	$(QEMU) -kernel $(BIN) $(QEMUFLAGS)
+$(ISO): $(BIN) $(GRUBCFG)
+	@mkdir -p $(BUILDDIR)boot/grub
+	cp $(BIN) $(BUILDDIR)boot/
+	cp $(GRUBCFG) $(BUILDDIR)boot/grub/
+	grub-mkrescue -d /usr/lib/grub/i386-pc/ -o $(ISO) $(BUILDDIR)
+
+run: $(ISO)
+	$(QEMU) $(QEMUFLAGS) $(ISO)
+#bochs
+#$(QEMU) -kernel $(BIN) $(QEMUFLAGS)
 
 clean:
-	rm -f $(OBJS) $(BIN)
+	rm -f $(OBJS) $(BIN) $(ISO)
+	rm -rf $(BUILDDIR)
 
 $(BIN): $(OBJS) $(LINKSCRIPT) $(TARGET)
 	$(LD) -o $@ $(LINKFLAGS) $(OBJS)
