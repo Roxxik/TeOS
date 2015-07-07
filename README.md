@@ -1,6 +1,10 @@
 # TeOS
 small toy os
 
+# DELAYED 
+i won't work on this anymore because i figured out just building all the low level stuff all over again won't bring me anywhere
+That's why i'm contributing to BareMetal OS now
+
 # How to Build
 WIP
 feel free to contact me for everything related to this repo
