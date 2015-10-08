@@ -1,18 +1,21 @@
 # TeOS
 small toy os
 
-# DELAYED 
-i won't work on this anymore because i figured out just building all the low level stuff all over again won't bring me anywhere
-That's why i'm contributing to BareMetal OS now
-
 # How to Build
 WIP
 feel free to contact me for everything related to this repo
 
 you'll need
 
+    rustc
+
+    grub-mkrescue
+    libisoburn
+
     libcore
     rlibc
+
+    qemu
 
 //TODO add links or put those as submodules into git
 
@@ -21,12 +24,15 @@ in theory this kernel can be put on a stick with grub and booted but this isn't 
 
 //TODO add the specific commands to do so
 
+# current topic
+- doing stuff to set up page tables
+
 # Todo
 - ports in screen.rs are hardcoded
 - cursor positioning should not happen after each displayed character
 
 # Currently working
-- line based output with scrolling
+- (line based output with scrolling) if i get paging to work
 
 # Design goals:
 - learn something about Rust and OSes
