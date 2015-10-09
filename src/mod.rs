@@ -3,6 +3,8 @@
 #![feature(core_str_ext)]
 #![feature(asm)]
 
+#![allow(private_no_mangle_fns)]
+
 #![no_std]
 
 mod kernel;

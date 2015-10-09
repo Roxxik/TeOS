@@ -2,7 +2,7 @@
 
 #[lang="panic_fmt"]
 #[no_mangle]
-pub fn rust_begin_unwind(args: ::core::fmt::Arguments, file: &str, line: usize) -> !
+pub extern fn rust_begin_unwind(args: ::core::fmt::Arguments, file: &str, line: usize) -> !
 {
 	// 'args' will print to the formatted string passed to panic!
 	log!("file='{}', line={} :: {}", file, line, args);
@@ -11,7 +11,7 @@ pub fn rust_begin_unwind(args: ::core::fmt::Arguments, file: &str, line: usize) 
 
 #[lang="stack_exhausted"]
 #[no_mangle]
-pub fn __morestack() -> !
+pub extern fn __morestack() -> !
 {
 	loop {}
 }
@@ -54,7 +54,7 @@ pub struct _Unwind_Exception
 
 #[lang="eh_personality"]
 #[no_mangle]
-pub fn rust_eh_personality(
+pub extern fn rust_eh_personality(
 	_version: isize, _actions: _Unwind_Action, _exception_class: u64,
 	_exception_object: &_Unwind_Exception, _context: &_Unwind_Context
 	) -> _Unwind_Reason_Code
@@ -64,7 +64,7 @@ pub fn rust_eh_personality(
 
 #[no_mangle]
 #[allow(non_snake_case)]
-pub fn _Unwind_Resume()
+pub extern fn _Unwind_Resume()
 {
 	loop{}
 }

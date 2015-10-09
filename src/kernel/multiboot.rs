@@ -1,3 +1,4 @@
+//taken from https://github.com/thepowersgang/rust-barebones-kernel
 use core::mem::{transmute};
 use core::ops::FnMut;
 use core::raw;

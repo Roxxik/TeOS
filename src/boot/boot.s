@@ -1,5 +1,9 @@
+/* Originally from https://github.com/thepowersgang/rust-barebones-kernel */
+
+/* --- Constants ------------------------------------------------------------ */
+
 /* The kernel is linked to run at -2GB. This allows efficient addressing */
-KERNEL_BASE = 0xFFFF800000000000
+KERNEL_BASE = 0xFFFFFFFF80000000
 
 /* === Multiboot Header === */
 MULTIBOOT_PAGE_ALIGN  =  (1<<0)
@@ -7,8 +11,10 @@ MULTIBOOT_MEMORY_INFO =  (1<<1)
 MULTIBOOT_HEADER_MAGIC =  0x1BADB002
 MULTIBOOT_HEADER_FLAGS = (MULTIBOOT_PAGE_ALIGN | MULTIBOOT_MEMORY_INFO)
 MULTIBOOT_CHECKSUM     = -(MULTIBOOT_HEADER_MAGIC + MULTIBOOT_HEADER_FLAGS)
+
+/* --- Multiboot Header ----------------------------------------------------- */
+
 .section .multiboot, "a"
-.globl mboot
 mboot:
     .long MULTIBOOT_HEADER_MAGIC
     .long MULTIBOOT_HEADER_FLAGS
@@ -22,9 +28,7 @@ mboot:
     .long 0     /* Height (no preference) */
     .long 0     /* Depth (32-bit preferred) */
 
-#define DEBUG(c)    mov $0x3f8, %dx ; mov $c, %al ; outb %al, %dx
-
-/* === Code === */
+/* --- 32-Bit Code ---------------------------------------------------------- */
 .section .inittext, "ax"
 .globl start
 .code32
@@ -57,7 +61,7 @@ start:
     or $(0x80|0x20|0x10), %eax
     mov %eax, %cr4
 
-    /* Load PDP4 */
+    /* Load PML4 */
     mov $(init_pml4 - KERNEL_BASE), %eax
     mov %eax, %cr3
 
@@ -92,8 +96,9 @@ not64bitCapable:
 not64bitCapable.loop:
     hlt
     jmp not64bitCapable.loop
+
+/* --- 64-Bit Code ---------------------------------------------------------- */
 .code64
-.globl start64
 start64:
     /* Running in 64-bit mode, jump to high memory */
     lgdt GDTPtr
@@ -102,7 +107,6 @@ start64:
 
 .section .text
 .extern kmain
-.globl start64_high
 start64_high:
     /* and clear low-memory mapping */
     mov $0, %rax
@@ -119,6 +123,8 @@ start64_high:
     /* Set up stack pointer */
     mov $init_stack, %rsp
 
+
+    mov $(init_pml4), %rdi
     /* call the rust code */
     call kmain
 
@@ -129,55 +135,54 @@ start64.loop:
 
 
 
-/* === Page-aligned data === */
+/* --- Page Table ----------------------------------------------------------- */
 .section .padata
-.globl init_pd
-.globl init_pml4
 /* Initial paging structures, four levels */
-/* The +7 for sub-pages indicates "present (1) + writable (2) + supervisor(4)" */
-init_pml4t:
-    .quad init_pdpt - KERNEL_BASE + 7    /* low map for startup, will be cleared before rust code runs */
+/* only using 3 leves, because of 2MB pages
+/* The +3 for sub-pages indicates "present (1) + writable (2)" */
+init_pml4:
+    .quad low_pdpt - KERNEL_BASE + 3    /* low map for startup, will be cleared before rust code runs */
     .rept 512 - 2
        .quad 0
     .endr
-    .quad init_pdpt - KERNEL_BASE + 7    /* Final mapping */
-init_pdpt:
-    .quad init_pd - KERNEL_BASE + 7
-    .rept 512 - 1
-       .quad 0
-    .endr
-init_pdt:
-    .quad initpt - KENERL_BASE + 7
+    .quad init_pdpt - KERNEL_BASE + 3    /* Final mapping */
+low_pdpt:
+    .quad init_pd - KERNEL_BASE + 3    /* early init identity map */
     .rept 512 - 1
         .quad 0
     .endr
-init_pt:
-    .quad 0x0000 + 7
-    .quad 0x1000 + 7
-    .quad 0x2000 + 7
-    .quad 0x3000 + 7
-
+init_pdpt:    /* covers the top 512GB, 1GB each entry */
+    .rept 512 - 2
+       .quad 0
+    .endr
+    .quad init_pd - KERNEL_BASE + 3    /* at -2GB, identity map the kernel image */
+    .quad 0
+init_pd:    /* covers the top 1GB, 2MB each entry */
+    /* 0x80 = Page size extension */
+    .quad 0x000000 + 0x80 + 3    /* Map 2MB, enough for a 1MB kernel */
+    .quad 0x200000 + 0x80 + 3    /* - give it another 2MB, just in case */
+    .rept 512 - 2
+        .quad 0
+    .endr
+/* --- Stack ---------------------------------------------------------------- */
 init_stack_base:
     .rept 0x1000 * 60
         .byte 0
     .endr
 init_stack:
 
-/* === General Data === */
+/* --- Multiboot Data ------------------------------------------------------- */
 .section .data
-.globl mboot_sig
-.globl mboot_ptr
 mboot_sig:    .quad 0
 mboot_ptr:    .quad 0
 
-/* Global Descriptor Table */
+/* --- Global Descriptor Table ---------------------------------------------- */
 GDTPtr_low:
     .word GDT - GDTEnd
     .long GDT - KERNEL_BASE
 GDTPtr:
     .word GDT - GDTEnd
     .quad GDT
-.globl GDT
 GDT:
         .long 0, 0
         .long 0x00000000, 0x00209A00    /* 0x08: 64-bit Code */

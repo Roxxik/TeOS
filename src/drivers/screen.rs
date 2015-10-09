@@ -2,7 +2,6 @@ pub use prelude::*;
 use core::fmt;
 use super::io::{inb, outb};
 
-
 static VIDEO_ADDRESS: u32 = 0xB8000;
 static MAX_ROWS: u8 = 25;
 static MAX_COLS: u8 = 80;
