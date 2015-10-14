@@ -62,7 +62,7 @@ start:
     mov %eax, %cr4
 
     /* Load PML4 */
-    mov $(init_pml4 - KERNEL_BASE), %eax
+    mov $(init_pml4t - KERNEL_BASE), %eax
     mov %eax, %cr3
 
     /* Enable IA-32e mode (Also enables SYSCALL and NX) */
@@ -110,7 +110,7 @@ start64:
 start64_high:
     /* and clear low-memory mapping */
     mov $0, %rax
-    mov %rax, init_pml4 - KERNEL_BASE + 0
+    mov %rax, init_pml4t - KERNEL_BASE + 0
 
     /* Set up segment registers */
     mov $0x10, %ax
@@ -124,8 +124,12 @@ start64_high:
     mov $init_stack, %rsp
 
 
-    mov $(init_pml4), %rdi
+
     /* call the rust code */
+    xchg %bx, %bx
+    mov (mboot_sig), %rdi
+    mov $(mboot_ptr), %rsi
+    mov $(init_pml4t), %rdx
     call kmain
 
     /* and if that returns (it shouldn't) loop forever */
@@ -133,21 +137,19 @@ start64.loop:
     hlt
     jmp start64.loop
 
-
-
 /* --- Page Table ----------------------------------------------------------- */
 .section .padata
 /* Initial paging structures, four levels */
 /* only using 3 leves, because of 2MB pages
 /* The +3 for sub-pages indicates "present (1) + writable (2)" */
-init_pml4:
+init_pml4t:
     .quad low_pdpt - KERNEL_BASE + 3    /* low map for startup, will be cleared before rust code runs */
     .rept 512 - 2
        .quad 0
     .endr
     .quad init_pdpt - KERNEL_BASE + 3    /* Final mapping */
 low_pdpt:
-    .quad init_pd - KERNEL_BASE + 3    /* early init identity map */
+    .quad init_pdt - KERNEL_BASE + 3    /* early init identity map */
     .rept 512 - 1
         .quad 0
     .endr
@@ -155,9 +157,9 @@ init_pdpt:    /* covers the top 512GB, 1GB each entry */
     .rept 512 - 2
        .quad 0
     .endr
-    .quad init_pd - KERNEL_BASE + 3    /* at -2GB, identity map the kernel image */
+    .quad init_pdt - KERNEL_BASE + 3    /* at -2GB, identity map the kernel image */
     .quad 0
-init_pd:    /* covers the top 1GB, 2MB each entry */
+init_pdt:    /* covers the top 1GB, 2MB each entry */
     /* 0x80 = Page size extension */
     .quad 0x000000 + 0x80 + 3    /* Map 2MB, enough for a 1MB kernel */
     .quad 0x200000 + 0x80 + 3    /* - give it another 2MB, just in case */

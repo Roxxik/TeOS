@@ -7,7 +7,7 @@
 
 #![no_std]
 
-mod kernel;
+pub mod kernel;
 mod drivers;
 mod prelude;
 mod mm;

@@ -52,7 +52,7 @@ fn wrap_get_cursor() -> isize {
 unsafe fn get_cursor() -> isize {
     outb(REG_SCREEN_CTRL, 0x0E);
     let mut offset: isize = (inb(REG_SCREEN_DATA) as isize) << 8;
-    outb(REG_SCREEN_CTRL,0x0F);
+    outb(REG_SCREEN_CTRL, 0x0F);
     offset += inb(REG_SCREEN_DATA) as isize;
     offset * 2
 }

@@ -1,6 +1,7 @@
 pub use prelude::*;
 use core::fmt;
 use super::io::{inb, outb};
+
 /// Write a string to the output channel.
 pub unsafe fn puts(s: &str) {
 	for b in s.bytes() {

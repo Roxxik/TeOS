@@ -19,7 +19,6 @@ LIBCORE=libcore.rlib
 RLIBCSRC=rlibc/src/lib.rs
 RLIBC=librlibc.rlib
 
-
 SRCS=$(wildcard src/*.rs src/drivers/*.rs src/kernel/*.rs)
 
 OBJS=kernel.o boot.o $(LIBCORE) $(RLIBC)
@@ -36,7 +35,7 @@ BUILDDIR=build/
 
 BIN = teos.kernel
 
-.PHONY: all run debug clean
+.PHONY: all iso run debug clean
 
 #from http://wiki.osdev.org/Makefile
 #todolist:
@@ -44,6 +43,8 @@ BIN = teos.kernel
 
 
 all: $(BIN)
+
+iso: $(ISO)
 
 $(ISO): $(BIN) $(GRUBCFG)
 	@mkdir -p $(BUILDDIR)boot/grub
@@ -69,8 +70,8 @@ $(LIBCORE): $(LIBCORESRC) $(TARGETSPEC)
 $(RLIBC): $(RLIBCSRC) $(LIBCORE) $(TARGETSPEC)
 	$(RUSTC) $(RUSTFLAGS) -o $@ --crate-type=lib --emit=link --extern core=$(LIBCORE) $(RLIBCSRC)
 
-kernel.o: $(MAIN) $(LIBCORE) $(SRCS) $(TARGET)
-	$(RUSTC) $(RUSTFLAGS) -o $@ --emit=obj --extern core=$(LIBCORE) $(MAIN)
+kernel.o: $(MAIN) $(LIBCORE) $(RLIBC) $(SRCS) $(TARGET)
+	$(RUSTC) -O $(RUSTFLAGS) -o $@ --emit=obj --extern core=$(LIBCORE) --extern libx86=$(X86LIB) $(MAIN)
 
 boot.o: $(BOOT)
 	$(AS) $(ASFLAGS) -o $@ $<
