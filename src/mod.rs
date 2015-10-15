@@ -4,8 +4,12 @@
 #![feature(asm)]
 
 #![allow(private_no_mangle_fns)]
+#![allow(dead_code)]
 
 #![no_std]
+
+#[macro_use]
+extern crate bitflags;
 
 pub mod kernel;
 mod drivers;

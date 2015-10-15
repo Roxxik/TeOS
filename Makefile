@@ -19,9 +19,12 @@ LIBCORE=libcore.rlib
 RLIBCSRC=rlibc/src/lib.rs
 RLIBC=librlibc.rlib
 
+BITFLAGSSRC = bitflags/src/lib.rs
+BITFLAGS = libbitflags.rlib
+
 SRCS=$(wildcard src/*.rs src/drivers/*.rs src/kernel/*.rs)
 
-OBJS=kernel.o boot.o $(LIBCORE) $(RLIBC)
+OBJS=kernel.o boot.o $(LIBCORE) $(RLIBC) $(BITFLAGS)
 MAIN=src/mod.rs
 BOOT=src/boot/boot.s
 
@@ -70,8 +73,11 @@ $(LIBCORE): $(LIBCORESRC) $(TARGETSPEC)
 $(RLIBC): $(RLIBCSRC) $(LIBCORE) $(TARGETSPEC)
 	$(RUSTC) $(RUSTFLAGS) -o $@ --crate-type=lib --emit=link --extern core=$(LIBCORE) $(RLIBCSRC)
 
-kernel.o: $(MAIN) $(LIBCORE) $(RLIBC) $(SRCS) $(TARGET)
-	$(RUSTC) -O $(RUSTFLAGS) -o $@ --emit=obj --extern core=$(LIBCORE) --extern libx86=$(X86LIB) $(MAIN)
+$(BITFLAGS): $(RBITFLAGSSRC) $(LIBCORE) $(TARGETSPEC)
+	$(RUSTC) $(RUSTFLAGS) -o $@ --crate-type=lib --emit=link --extern core=$(LIBCORE) $(BITFLAGSSRC)
+
+kernel.o: $(MAIN) $(LIBCORE) $(RLIBC) $(BITFLAGS) $(SRCS) $(TARGET)
+	$(RUSTC) -O $(RUSTFLAGS) -o $@ --emit=obj --extern core=$(LIBCORE) --extern bitflags=$(BITFLAGS) $(MAIN)
 
 boot.o: $(BOOT)
 	$(AS) $(ASFLAGS) -o $@ $<
