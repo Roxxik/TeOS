@@ -14,10 +14,13 @@ you'll need
 
     qemu
 
-copy from rust repo [https://github.com/rust-lang/rust]
+copy to the root of this repo
 
-    libcore
-    rlibc
+    [libcore]
+    [rlibc]
+
+[libcore]: hhttps://github.com/rust-lang/rust/tree/master/src/libcore
+[rlibc]: https://github.com/alexcrichton/rlibc
 
 //TODO add links or put those as submodules into git
 
