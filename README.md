@@ -12,10 +12,12 @@ you'll need
     grub-mkrescue
     libisoburn
 
+    qemu
+
+copy from rust repo [https://github.com/rust-lang/rust]
+
     libcore
     rlibc
-
-    qemu
 
 //TODO add links or put those as submodules into git
 
