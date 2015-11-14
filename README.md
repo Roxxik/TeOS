@@ -1,5 +1,7 @@
 # TeOS
-small toy os
+small toy Operating System written in Rust
+
+currently only running on some (virtualized) x64 CPUs
 
 # How to Build
 WIP
