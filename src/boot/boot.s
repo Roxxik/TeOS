@@ -143,29 +143,22 @@ start64.loop:
 /* only using 3 leves, because of 2MB pages
 /* The +3 for sub-pages indicates "present (1) + writable (2)" */
 init_pml4t:
-    .quad low_pdpt - KERNEL_BASE + 3    /* low map for startup, will be cleared before rust code runs */
+    .quad low_pdpt - KERNEL_BASE + 3     /* low map for startup, will be cleared before rust code runs */
     .rept 512 - 2
        .quad 0
     .endr
     .quad init_pdpt - KERNEL_BASE + 3    /* Final mapping */
 low_pdpt:
-    .quad init_pdt - KERNEL_BASE + 3    /* early init identity map */
+    .quad 0x0 + 0x80 + 3                 /* early init identity map */
     .rept 512 - 1
         .quad 0
     .endr
-init_pdpt:    /* covers the top 512GB, 1GB each entry */
+init_pdpt:                               /* covers the top 512GB, 1GB each entry */
     .rept 512 - 2
        .quad 0
     .endr
-    .quad init_pdt - KERNEL_BASE + 3    /* at -2GB, identity map the kernel image */
+    .quad 0x0 + 0x80 + 3
     .quad 0
-init_pdt:    /* covers the top 1GB, 2MB each entry */
-    /* 0x80 = Page size extension */
-    .quad 0x000000 + 0x80 + 3    /* Map 2MB, enough for a 1MB kernel */
-    .quad 0x200000 + 0x80 + 3    /* - give it another 2MB, just in case */
-    .rept 512 - 2
-        .quad 0
-    .endr
 /* --- Stack ---------------------------------------------------------------- */
 init_stack_base:
     .rept 0x1000 * 60
