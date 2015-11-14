@@ -33,24 +33,24 @@ bochs works, too
     make bochs
 
 # current topic
-- get a simple page allocator working
+- doing stuff to set up page tables
+
+The idea to do so:
+setup everything with a 1GB identity-mapped pt, build all necessary structures and then start paging
 
 # Todo
-- ports in serial/screen.rs are hardcoded
+- ports in screen.rs are hardcoded
 - cursor positioning should not happen after each displayed character
-- fixing bochs triple-fault, currently only working in qemu
 
 # Currently working
-- line based output with scrolling
-- serial output
-- basic page table
+- (line based output with scrolling) if paging works
 
 # Design goals:
 - learn something about Rust and OSes
 
 - first of this will be a kernel-only thing hoping that rusts memory protection is enough to get my own code working
 
-I don't know where this is going, but for now i won't go too deep into stuff and just try to get the basics working
+I don't know where this is going, but for now i won't go too low on stuff and just try to get the basics working
 
 in the very far future this might be a micro/nano/exo kernel
 
