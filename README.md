@@ -33,17 +33,16 @@ bochs works, too
     make bochs
 
 # current topic
-- doing stuff to set up page tables
-
-The idea to do so:
-setup everything with a 1GB identity-mapped pt, build all necessary structures and then start paging
+- get a simple page allocator working
 
 # Todo
 - ports in screen.rs are hardcoded
 - cursor positioning should not happen after each displayed character
 
 # Currently working
-- (line based output with scrolling) if paging works
+- line based output with scrolling
+- serial output
+- basic page table
 
 # Design goals:
 - learn something about Rust and OSes
