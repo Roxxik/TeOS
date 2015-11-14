@@ -36,7 +36,7 @@ bochs works, too
 - get a simple page allocator working
 
 # Todo
-- ports in screen.rs are hardcoded
+- ports in serial.rs are hardcoded
 - cursor positioning should not happen after each displayed character
 - fixing bochs triple-fault, currently only working in qemu
 
