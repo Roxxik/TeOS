@@ -38,6 +38,7 @@ bochs works, too
 # Todo
 - ports in screen.rs are hardcoded
 - cursor positioning should not happen after each displayed character
+- fixing bochs triple-fault, currently only working in qemu
 
 # Currently working
 - line based output with scrolling
