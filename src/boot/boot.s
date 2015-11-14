@@ -128,7 +128,7 @@ start64_high:
     /* call the rust code */
     xchg %bx, %bx
     mov (mboot_sig), %rdi
-    mov $(mboot_ptr), %rsi
+    mov (mboot_ptr), %rsi
     mov $(init_pml4t), %rdx
     call kmain
 
@@ -140,7 +140,7 @@ start64.loop:
 /* --- Page Table ----------------------------------------------------------- */
 .section .padata
 /* Initial paging structures, four levels */
-/* only using 3 leves, because of 2MB pages
+/* only using 2 levels, because of 1GB pages
 /* The +3 for sub-pages indicates "present (1) + writable (2)" */
 init_pml4t:
     .quad low_pdpt - KERNEL_BASE + 3     /* low map for startup, will be cleared before rust code runs */
@@ -168,6 +168,8 @@ init_stack:
 
 /* --- Multiboot Data ------------------------------------------------------- */
 .section .data
+.globl kernel_base
+kernel_base:  .quad KERNEL_BASE
 mboot_sig:    .quad 0
 mboot_ptr:    .quad 0
 

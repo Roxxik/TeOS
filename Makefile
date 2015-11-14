@@ -29,7 +29,7 @@ MAIN=src/mod.rs
 BOOT=src/boot/boot.s
 
 QEMU=qemu-system-x86_64
-QEMUFLAGS=-serial stdio
+QEMUFLAGS=-serial stdio -m 1G
 
 GRUBCFG=src/boot/grub.cfg
 
@@ -76,7 +76,7 @@ $(BITFLAGS): $(RBITFLAGSSRC) $(LIBCORE) $(TARGETSPEC)
 	$(RUSTC) $(RUSTFLAGS) -o $@ --crate-type=lib --emit=link --extern core=$(LIBCORE) $(BITFLAGSSRC)
 
 kernel.o: $(MAIN) $(LIBCORE) $(RLIBC) $(BITFLAGS) $(SRCS) $(TARGET)
-	$(RUSTC) -O $(RUSTFLAGS) -o $@ --emit=obj --extern core=$(LIBCORE) --extern bitflags=$(BITFLAGS) $(MAIN)
+	$(RUSTC) $(RUSTFLAGS) -o $@ --emit=obj --extern core=$(LIBCORE) --extern bitflags=$(BITFLAGS) $(MAIN)
 
 boot.o: $(BOOT)
 	$(AS) $(ASFLAGS) -o $@ $<

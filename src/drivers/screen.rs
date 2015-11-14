@@ -1,14 +1,15 @@
 pub use prelude::*;
 use core::fmt;
 use super::io::{inb, outb};
+use super::super::mm::paging;
 
-static VIDEO_ADDRESS: u32 = 0xB8000;
-static MAX_ROWS: u8 = 25;
-static MAX_COLS: u8 = 80;
-static WHITE_ON_BLACK: u8 = 0x0F;
+const VIDEO_ADDRESS: u64 = 0xB8000;
+const MAX_ROWS: u8 = 25;
+const MAX_COLS: u8 = 80;
+const WHITE_ON_BLACK: u8 = 0x0F;
 
-static REG_SCREEN_CTRL: u16 = 0x3D4;
-static REG_SCREEN_DATA: u16 = 0x3D5;
+const REG_SCREEN_CTRL: u16 = 0x3D4;
+const REG_SCREEN_DATA: u16 = 0x3D5;
 
 #[allow(improper_ctypes)]
 extern {
@@ -17,7 +18,7 @@ extern {
 }
 
 unsafe fn print_char(c: u8, attr: Option<u8>, pos: Option<(u8,u8)>) {
-    let vidmem = VIDEO_ADDRESS as *mut u8;
+    let vidmem = (VIDEO_ADDRESS + paging::kernel_base) as *mut u8;
     let attr = attr.unwrap_or(WHITE_ON_BLACK);
 
     let mut offset: isize = pos.map_or_else(wrap_get_cursor, get_screen_offset);

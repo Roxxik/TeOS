@@ -4,6 +4,14 @@ use core::fmt;
 pub type PAddr = u64;
 pub type VAddr = usize;
 
+extern {
+    pub static kernel_base: u64; /* from boot.s */
+}
+
+pub fn paddr_to_vaddr(p_addr: PAddr) -> VAddr {
+    (p_addr + kernel_base) as usize
+}
+
 pub const BASE_PAGE_SIZE: u64 = 1024 * 4; // 4 KiB
 pub const LARGE_PAGE_SIZE: u64 = 1024 * 1024 * 2; // 2 MiB
 pub const HUGE_PAGE_SIZE: u64 = 1024 * 1024 * 1024; // 1 GiB

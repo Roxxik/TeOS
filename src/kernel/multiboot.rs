@@ -110,7 +110,6 @@ impl<'a> Multiboot<'a> {
     pub fn new(mboot_ptr: u64, paddr_to_vaddr: fn(paddr: PAddr) -> VAddr) -> Multiboot<'a> {
         let header = paddr_to_vaddr(mboot_ptr);
         let mb: &MultibootHeader = unsafe { transmute::<VAddr, &MultibootHeader>(header) };
-
         Multiboot { header: mb, paddr_to_vaddr: paddr_to_vaddr }
     }
 
@@ -128,7 +127,6 @@ impl<'a> Multiboot<'a> {
         if !self.has_mmap() {
             return
         }
-
         let paddr_to_vaddr = self.paddr_to_vaddr;
 
         let mut current = self.header.mmap_addr;
