@@ -7,7 +7,7 @@ feel free to contact me for everything related to this repo
 
 you'll need
 
-    rustc
+    rustc (tested only on nightly)
 
     grub-mkrescue
     libisoburn
