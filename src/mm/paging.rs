@@ -4,9 +4,9 @@ use core::fmt;
 pub type PAddr = u64;
 pub type VAddr = usize;
 
-pub const BASE_PAGE_SIZE: u64 = 4096; // 4 KiB
-pub const LARGE_PAGE_SIZE: u64 = 1024*1024*2; // 2 MiB
-pub const HUGE_PAGE_SIZE: u64 = 1024*1024*1024; // 1 GiB
+pub const BASE_PAGE_SIZE: u64 = 1024 * 4; // 4 KiB
+pub const LARGE_PAGE_SIZE: u64 = 1024 * 1024 * 2; // 2 MiB
+pub const HUGE_PAGE_SIZE: u64 = 1024 * 1024 * 1024; // 1 GiB
 pub const CACHE_LINE_SIZE: usize = 64; // 64 Bytes
 
 /// MAXPHYADDR, which is at most 52; (use CPUID for finding system value).
@@ -101,12 +101,6 @@ impl PML4Entry {
     }
 }
 
-impl fmt::Debug for PML4Entry {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.bits)
-    }
-}
-
 /// PDPT Entry bits description.
 bitflags! {
     flags PDPTEntry: u64 {
@@ -161,12 +155,6 @@ impl PDPTEntry {
     /// Convenience function to check if the present bit is set.
     pub fn is_present(self) -> bool {
         self.contains(PDPT_P)
-    }
-}
-
-impl fmt::Debug for PDPTEntry {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.bits)
     }
 }
 
@@ -227,12 +215,6 @@ impl PDEntry {
     }
 }
 
-impl fmt::Debug for PDEntry {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.bits)
-    }
-}
-
 /// PT Entry bits description.
 bitflags! {
     flags PTEntry: u64 {
@@ -280,11 +262,5 @@ impl PTEntry {
     /// Convenience function to check if the present bit is set.
     pub fn is_present(self) -> bool {
         self.contains(PT_P)
-    }
-}
-
-impl fmt::Debug for PTEntry {
-    fn fmt(&self, f: &mut fmt::Formatter) -> fmt::Result {
-        write!(f, "{}", self.bits)
     }
 }
