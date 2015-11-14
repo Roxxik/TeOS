@@ -30,6 +30,7 @@ bochs works, too
 
 # current topic
 - doing stuff to set up page tables
+
 The idea to do so:
 setup everything with a 1GB identity-mapped pt, build all necessary structures and then start paging
 
