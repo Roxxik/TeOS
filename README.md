@@ -49,7 +49,7 @@ bochs works, too
 
 - first of this will be a kernel-only thing hoping that rusts memory protection is enough to get my own code working
 
-I don't know where this is going, but for now i won't go too low on stuff and just try to get the basics working
+I don't know where this is going, but for now i won't go too deep into stuff and just try to get the basics working
 
 in the very far future this might be a micro/nano/exo kernel
 
