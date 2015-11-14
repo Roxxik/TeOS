@@ -38,7 +38,7 @@ BUILDDIR=build/
 
 BIN = teos.kernel
 
-.PHONY: all iso run debug clean
+.PHONY: all iso run debug clean qemu bochs
 
 #from http://wiki.osdev.org/Makefile
 #todolist:
@@ -49,20 +49,19 @@ all: $(BIN)
 
 iso: $(ISO)
 
+run: qemu
+
+qemu: iso
+	$(QEMU) $(QEMUFLAGS) $(ISO)
+
+bochs: iso
+	bochs
+
 $(ISO): $(BIN) $(GRUBCFG)
 	@mkdir -p $(BUILDDIR)boot/grub
 	cp $(BIN) $(BUILDDIR)boot/
 	cp $(GRUBCFG) $(BUILDDIR)boot/grub/
 	grub-mkrescue -d /usr/lib/grub/i386-pc/ -o $(ISO) $(BUILDDIR)
-
-run: $(ISO)
-	$(QEMU) $(QEMUFLAGS) $(ISO)
-#bochs
-#$(QEMU) -kernel $(BIN) $(QEMUFLAGS)
-
-clean:
-	rm -f $(OBJS) $(BIN) $(ISO)
-	rm -rf $(BUILDDIR)
 
 $(BIN): $(OBJS) $(LINKSCRIPT) $(TARGET)
 	$(LD) -o $@ $(LINKFLAGS) $(OBJS)
@@ -81,3 +80,9 @@ kernel.o: $(MAIN) $(LIBCORE) $(RLIBC) $(BITFLAGS) $(SRCS) $(TARGET)
 
 boot.o: $(BOOT)
 	$(AS) $(ASFLAGS) -o $@ $<
+
+
+clean:
+	rm -f $(OBJS) $(BIN) $(ISO)
+	rm -rf $(BUILDDIR)
+

@@ -12,8 +12,6 @@ you'll need
     grub-mkrescue
     libisoburn
 
-    qemu
-
 copy to the root of this repo:
 
 - [libcore]
@@ -22,31 +20,35 @@ copy to the root of this repo:
 [libcore]: https://github.com/rust-lang/rust/tree/master/src/libcore
 [rlibc]: https://github.com/alexcrichton/rlibc
 
-//TODO add links or put those as submodules into git
-
 and qemu to virtualize the OS
 in theory this kernel can be put on a stick with grub and booted but this isn't tested
 
-//TODO add the specific commands to do so
+    make qemu
+
+bochs works, too
+
+    make bochs
 
 # current topic
 - doing stuff to set up page tables
+The idea to do so:
+setup everything with a 1GB identity-mapped pt, build all necessary structures and then start paging
 
 # Todo
 - ports in screen.rs are hardcoded
 - cursor positioning should not happen after each displayed character
 
 # Currently working
-- (line based output with scrolling) if i get paging to work
+- (line based output with scrolling) if paging works
 
 # Design goals:
 - learn something about Rust and OSes
 
-- first of this will be a kernel only thing hoping that rusts memory protection is enough to get my own code working
+- first of this will be a kernel-only thing hoping that rusts memory protection is enough to get my own code working
 
 I don't know where this is going, but for now i won't go too low on stuff and just try to get the basics working
 
-in the very far future this might be a micro/nano kernel
+in the very far future this might be a micro/nano/exo kernel
 
 # Short-term goals
 - get input going/keyboard interrupts
@@ -56,8 +58,8 @@ in the very far future this might be a micro/nano kernel
 # Longer-term goals
 - Disk Access / Filesystem
 - maybe networking
-- graphics
+- move stuff out of kernel-land
+- (graphics) not a first-class target
 - (multitasking)
-- move stuff out of kernel land
 
 - build the tool chain for my TeOs so that i can start developing on it
