@@ -20,8 +20,7 @@ copy to the root of this repo:
 [libcore]: https://github.com/rust-lang/rust/tree/master/src/libcore
 [rlibc]: https://github.com/alexcrichton/rlibc
 
-and qemu to virtualize the OS
-in theory this kernel can be put on a stick with grub and booted but this isn't tested
+qemu to virtualize the OS, in theory this kernel can be put on a stick with grub and booted but this isn't tested
 
     make qemu
 
