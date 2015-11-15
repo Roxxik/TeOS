@@ -1,8 +1,8 @@
 #![feature(lang_items)]
 #![feature(no_std)]
 #![feature(core_str_ext)]
-#![feature(asm)
-]#![feature(raw)]
+#![feature(asm)]
+#![feature(raw)]
 
 #![allow(private_no_mangle_fns)]
 #![allow(dead_code)]

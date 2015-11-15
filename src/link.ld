@@ -36,8 +36,6 @@ SECTIONS {
 		*(.bss .bss.*)
 	}
 
-	kernel_end = .;
-
 	/DISCARD/ : {
 		*(.note .note.*)
 	}

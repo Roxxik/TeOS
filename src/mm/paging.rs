@@ -1,5 +1,4 @@
-//taken from https://github.com/gz/rust-x86   src/paging.rs
-use core::fmt;
+// taken from https://github.com/gz/rust-x86   src/paging.rs
 
 pub type PAddr = u64;
 pub type VAddr = usize;
@@ -8,7 +7,7 @@ extern {
     pub static kernel_base: u64; /* from boot.s */
 }
 
-pub fn paddr_to_vaddr(p_addr: PAddr) -> VAddr {
+pub fn phys_to_virt(p_addr: PAddr) -> VAddr {
     (p_addr + kernel_base) as usize
 }
 
@@ -114,9 +113,12 @@ bitflags! {
     flags PDPTEntry: u64 {
         /// Present; must be 1 to map a 1-GByte page or reference a page directory.
         const PDPT_P       = 0b00000001,
-        /// Read/write; if 0, writes may not be allowed to the 1-GByte region controlled by this entry
+        /// Read/write;
+        ///if 0, writes may not be allowed to the 1-GByte region controlled by
+        ///this entry
         const PDPT_RW      = 0b00000010,
-        /// User/supervisor; user-mode accesses are not allowed to the 1-GByte region controlled by this entry.
+        /// User/supervisor; user-mode accesses are not allowed to the 1-GByte region controlled
+        ///by this entry.
         const PDPT_US      = 0b00000100,
         /// Page-level write-through.
         const PDPT_PWT     = 0b00001000,
@@ -125,16 +127,20 @@ bitflags! {
         /// Accessed; if PDPT_PS set indicates whether software has accessed the 1-GByte page
         /// else indicates whether this entry has been used for linear-address translation
         const PDPT_A       = 0b00100000,
-        /// Dirty; if PDPT_PS indicates whether software has written to the 1-GByte page referenced by this entry.
+        /// Dirty; if PDPT_PS indicates whether software has written to the 1-GByte page
+        ///referenced by this entry.
         /// else ignored.
         const PDPT_D       = 0b01000000,
-        /// Page size; if set this entry maps a 1-GByte page; otherwise, this entry references a page directory.
+        /// Page size; if set this entry maps a 1-GByte page; otherwise, this entry references a
+        ///page directory.
         /// if not PDPT_PS this is ignored.
         const PDPT_PS      = 0b10000000,
-        /// Global; if PDPT_PS && CR4.PGE = 1, determines whether the translation is global; ignored otherwise
+        /// Global; if PDPT_PS && CR4.PGE = 1, determines whether the translation is global;
+        ///ignored otherwise
         /// if not PDPT_PS this is ignored.
         const PDPT_G       = 1<<8,
-        /// Indirectly determines the memory type used to access the 1-GByte page referenced by this entry.
+        /// Indirectly determines the memory type used to access the 1-GByte page referenced by
+        ///this entry.
         const PDPT_PAT     = 1<<12,
         /// If IA32_EFER.NXE = 1, execute-disable
         /// If 1, instruction fetches are not allowed from the 512-GByte region.
@@ -171,9 +177,11 @@ bitflags! {
     flags PDEntry: u64 {
         /// Present; must be 1 to map a 2-MByte page or reference a page table.
         const PD_P       = 0b00000001,
-        /// Read/write; if 0, writes may not be allowed to the 2-MByte region controlled by this entry
+        /// Read/write; if 0, writes may not be allowed to the 2-MByte region controlled by this
+        ///entry
         const PD_RW      = 0b00000010,
-        /// User/supervisor; user-mode accesses are not allowed to the 2-MByte region controlled by this entry.
+        /// User/supervisor; user-mode accesses are not allowed to the 2-MByte region controlled
+        ///by this entry.
         const PD_US      = 0b00000100,
         /// Page-level write-through.
         const PD_PWT     = 0b00001000,
@@ -182,15 +190,19 @@ bitflags! {
         /// Accessed; if PD_PS set indicates whether software has accessed the 2-MByte page
         /// else indicates whether this entry has been used for linear-address translation
         const PD_A       = 0b00100000,
-        /// Dirty; if PD_PS indicates whether software has written to the 2-MByte page referenced by this entry.
+        /// Dirty; if PD_PS indicates whether software has written to the 2-MByte page referenced
+        ///by this entry.
         /// else ignored.
         const PD_D       = 0b01000000,
-        /// Page size; if set this entry maps a 2-MByte page; otherwise, this entry references a page directory.
+        /// Page size; if set this entry maps a 2-MByte page; otherwise, this entry references a
+        ///page directory.
         const PD_PS      = 0b10000000,
-        /// Global; if PD_PS && CR4.PGE = 1, determines whether the translation is global; ignored otherwise
+        /// Global; if PD_PS && CR4.PGE = 1, determines whether the translation is global;
+        ///ignored otherwise
         /// if not PD_PS this is ignored.
         const PD_G       = 1<<8,
-        /// Indirectly determines the memory type used to access the 2-MByte page referenced by this entry.
+        /// Indirectly determines the memory type used to access the 2-MByte page referenced by
+        ///this entry.
         /// if not PD_PS this is ignored.
         const PD_PAT     = 1<<12,
         /// If IA32_EFER.NXE = 1, execute-disable
@@ -228,9 +240,11 @@ bitflags! {
     flags PTEntry: u64 {
         /// Present; must be 1 to map a 4-KByte page.
         const PT_P       = 0b00000001,
-        /// Read/write; if 0, writes may not be allowed to the 4-KByte region controlled by this entry
+        /// Read/write; if 0, writes may not be allowed to the 4-KByte region controlled by
+        ///this entry
         const PT_RW      = 0b00000010,
-        /// User/supervisor; user-mode accesses are not allowed to the 4-KByte region controlled by this entry.
+        /// User/supervisor; user-mode accesses are not allowed to the 4-KByte region
+        ///controlled by this entry.
         const PT_US      = 0b00000100,
         /// Page-level write-through.
         const PT_PWT     = 0b00001000,
@@ -238,9 +252,11 @@ bitflags! {
         const PT_PCD     = 0b00010000,
         /// Accessed; indicates whether software has accessed the 4-KByte page
         const PT_A       = 0b00100000,
-        /// Dirty; indicates whether software has written to the 4-KByte page referenced by this entry.
+        /// Dirty; indicates whether software has written to the 4-KByte page referenced by
+        ///this entry.
         const PT_D       = 0b01000000,
-        /// Global; if CR4.PGE = 1, determines whether the translation is global (see Section 4.10); ignored otherwise
+        /// Global; if CR4.PGE = 1, determines whether the translation is global (see Section 4.10);
+        ///ignored otherwise
         const PT_G       = 1<<8,
         /// If IA32_EFER.NXE = 1, execute-disable
         /// If 1, instruction fetches are not allowed from the 512-GByte region.
@@ -259,7 +275,7 @@ impl PTEntry {
     ///  * `flags`- Additional flags for the entry.
     pub fn new(page: PAddr, flags: PTEntry) -> PTEntry {
         assert!(page % BASE_PAGE_SIZE == 0);
-        PTEntry{ bits: page | flags.bits }
+        PTEntry { bits: page | flags.bits }
     }
 
     /// Retrieves the physical address in this entry.

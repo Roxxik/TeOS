@@ -1,5 +1,5 @@
-//taken from https://github.com/thepowersgang/rust-barebones-kernel
-use core::mem::{transmute};
+// taken from https://github.com/thepowersgang/rust-barebones-kernel
+use core::mem::transmute;
 use core::ops::FnMut;
 use core::raw;
 use core::str;
@@ -52,7 +52,7 @@ struct MemEntry {
     size: u32,
     base_addr: u64,
     length: u64,
-    mtype: u32
+    mtype: u32,
 }
 
 #[derive(Debug)]
@@ -75,7 +75,7 @@ struct Module {
     /// Name of module.
     string: u32,
     /// Must be zero.
-    reserved: u32
+    reserved: u32,
 }
 
 /// Convert a C string into a [u8 slice and from there into a &'static str.
@@ -87,7 +87,10 @@ fn convert_safe_c_string(cstring: *const u8) -> &'static str {
             iter = iter.offset(1);
         }
 
-        let slice = raw::Slice { data: cstring, len: iter as usize - cstring as usize };
+        let slice = raw::Slice {
+            data: cstring,
+            len: iter as usize - cstring as usize,
+        };
         let byte_array: &'static [u8] = transmute(slice);
         str::from_utf8_unchecked(byte_array)
     }
@@ -110,7 +113,10 @@ impl<'a> Multiboot<'a> {
     pub fn new(mboot_ptr: u64, paddr_to_vaddr: fn(paddr: PAddr) -> VAddr) -> Multiboot<'a> {
         let header = paddr_to_vaddr(mboot_ptr);
         let mb: &MultibootHeader = unsafe { transmute::<VAddr, &MultibootHeader>(header) };
-        Multiboot { header: mb, paddr_to_vaddr: paddr_to_vaddr }
+        Multiboot {
+            header: mb,
+            paddr_to_vaddr: paddr_to_vaddr,
+        }
     }
 
     pub fn has_mmap(&'a self) -> bool {
@@ -125,20 +131,21 @@ impl<'a> Multiboot<'a> {
     ///
     pub fn find_memory<F: FnMut(u64, u64, MemType)>(&'a self, mut discovery_callback: F) {
         if !self.has_mmap() {
-            return
+            return;
         }
         let paddr_to_vaddr = self.paddr_to_vaddr;
 
         let mut current = self.header.mmap_addr;
         let end = self.header.mmap_addr + self.header.mmap_length;
-        while current < end
-        {
-            let memory_region: &MemEntry = unsafe { transmute::<VAddr, &MemEntry>(paddr_to_vaddr(current as u64)) };
+        while current < end {
+            let memory_region: &MemEntry = unsafe {
+                transmute::<VAddr, &MemEntry>(paddr_to_vaddr(current as u64))
+            };
 
             let mtype = match memory_region.mtype {
                 1 => MemType::RAM,
                 2 => MemType::Unusable,
-                _ => MemType::Unusable
+                _ => MemType::Unusable,
             };
 
             discovery_callback(memory_region.base_addr, memory_region.length, mtype);
@@ -147,7 +154,7 @@ impl<'a> Multiboot<'a> {
     }
 
     pub fn has_modules(&'a self) -> bool {
-        self.header.flags & (1<<3) > 0
+        self.header.flags & (1 << 3) > 0
     }
 
     /// Discover all additional modules in multiboot.
@@ -156,9 +163,10 @@ impl<'a> Multiboot<'a> {
     ///
     ///  * `discovery_callback` - Function to notify your system about modules.
     ///
-    pub fn find_modules<F: FnMut(&'static str, VAddr, VAddr)>(&'a self, mut discovery_callback: F) {
+    pub fn find_modules<F: FnMut(&'static str, VAddr, VAddr)>(&'a self,
+                                                              mut discovery_callback: F) {
         if !self.has_modules() {
-            return
+            return;
         }
 
         let paddr_to_vaddr = self.paddr_to_vaddr;
@@ -167,9 +175,14 @@ impl<'a> Multiboot<'a> {
         let count: usize = self.header.mods_count as usize;
         for _ in 0..count {
             let current: &Module = unsafe { transmute::<VAddr, &Module>(module_start) };
-            let path = unsafe { convert_safe_c_string(transmute::<VAddr, *const u8>(paddr_to_vaddr(current.string as u64))) };
+            let path = unsafe {
+                convert_safe_c_string(transmute::<VAddr,
+                                                  *const u8>(paddr_to_vaddr(current.string as u64)))
+            };
 
-            discovery_callback(path, paddr_to_vaddr(current.start as PAddr), paddr_to_vaddr(current.end as PAddr));
+            discovery_callback(path,
+                               paddr_to_vaddr(current.start as PAddr),
+                               paddr_to_vaddr(current.end as PAddr));
         }
     }
 }

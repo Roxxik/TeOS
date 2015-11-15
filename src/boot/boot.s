@@ -53,9 +53,9 @@ start:
 
     /* 3. Set up state for long mode */
     /* Enable:
-        PGE (Page Global Enable)
-      + PAE (Physical Address Extension)
-      + PSE (Page Size Extensions)
+        0x80: PGE (Page Global Enable)
+      + 0x20: PAE (Physical Address Extension)
+      + 0x10: PSE (Page Size Extensions)
     */
     mov %cr4, %eax
     or $(0x80|0x20|0x10), %eax
@@ -71,7 +71,7 @@ start:
     or $(1 << 11)|(1 << 8)|(1 << 0), %eax     /* NXE, LME, SCE */
     wrmsr
 
-    /* Enable paging and enter long mode */
+    /* 4. Enable paging and enter long mode */
     mov %cr0, %eax
     or $0x80010000, %eax      /* PG & WP */
     mov %eax, %cr0
@@ -110,7 +110,7 @@ start64:
 start64_high:
     /* and clear low-memory mapping */
     mov $0, %rax
-    mov %rax, init_pml4t - KERNEL_BASE + 0
+    mov %rax, init_pml4t + 0
 
     /* Set up segment registers */
     mov $0x10, %ax
@@ -123,10 +123,7 @@ start64_high:
     /* Set up stack pointer */
     mov $init_stack, %rsp
 
-
-
     /* call the rust code */
-    xchg %bx, %bx
     mov (mboot_sig), %rdi
     mov (mboot_ptr), %rsi
     mov $(init_pml4t), %rdx
@@ -149,7 +146,7 @@ init_pml4t:
     .endr
     .quad init_pdpt - KERNEL_BASE + 3    /* Final mapping */
 low_pdpt:
-    .quad 0x0 + 0x80 + 3                 /* early init identity map */
+    .quad 0x0 + 0x80 + 3                 /* early identity map */
     .rept 512 - 1
         .quad 0
     .endr

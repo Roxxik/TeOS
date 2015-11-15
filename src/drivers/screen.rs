@@ -17,19 +17,16 @@ extern {
     fn memset(s: *mut u8, c: i32, n: usize) -> *mut u8;
 }
 
-unsafe fn print_char(c: u8, attr: Option<u8>, pos: Option<(u8,u8)>) {
+unsafe fn print_char(c: u8, attr: Option<u8>, pos: Option<(u8, u8)>) {
     let vidmem = (VIDEO_ADDRESS + paging::kernel_base) as *mut u8;
     let attr = attr.unwrap_or(WHITE_ON_BLACK);
 
     let mut offset: isize = pos.map_or_else(wrap_get_cursor, get_screen_offset);
 
     if c == '\n' as u8 {
-        offset = get_screen_offset((
-            MAX_COLS - 1,
-            (offset / ((MAX_COLS as isize) * 2)) as u8
-        ));
+        offset = get_screen_offset((MAX_COLS - 1, (offset / ((MAX_COLS as isize) * 2)) as u8));
     } else {
-        *vidmem.offset(offset)     = c;
+        *vidmem.offset(offset) = c;
         *vidmem.offset(offset + 1) = attr;
     }
 
@@ -40,14 +37,12 @@ unsafe fn print_char(c: u8, attr: Option<u8>, pos: Option<(u8,u8)>) {
     set_cursor(offset);
 }
 
-fn get_screen_offset(pos: (u8,u8)) -> isize {
+fn get_screen_offset(pos: (u8, u8)) -> isize {
     ((pos.1 as isize) * (MAX_COLS as isize) + (pos.0 as isize)) * 2
 }
 
 fn wrap_get_cursor() -> isize {
-    unsafe{
-        get_cursor()
-    }
+    unsafe { get_cursor() }
 }
 
 unsafe fn get_cursor() -> isize {
@@ -70,22 +65,18 @@ unsafe fn handle_scrolling(cursor_offset: &mut isize) {
     if *cursor_offset >= (MAX_ROWS as isize) * (MAX_COLS as isize) * 2 {
         let vidmem = VIDEO_ADDRESS as *mut u8;
         for i in 1..MAX_ROWS {
-            memcpy(
-                vidmem.offset(get_screen_offset((0,i-1))),
-                vidmem.offset(get_screen_offset((0,i))),
-                (MAX_COLS as usize) * 2
-            );
+            memcpy(vidmem.offset(get_screen_offset((0, i - 1))),
+                   vidmem.offset(get_screen_offset((0, i))),
+                   (MAX_COLS as usize) * 2);
         }
-        memset(
-            vidmem.offset(get_screen_offset((0, MAX_ROWS - 1))),
-            0,
-            (MAX_COLS as usize) * 2
-        );
+        memset(vidmem.offset(get_screen_offset((0, MAX_ROWS - 1))),
+               0,
+               (MAX_COLS as usize) * 2);
         *cursor_offset -= (MAX_COLS as isize) * 2;
     }
 }
 
-pub fn print_at(s: &str, pos: Option<(u8,u8)>) {
+pub fn print_at(s: &str, pos: Option<(u8, u8)>) {
     unsafe {
         pos.map(|pos| set_cursor(get_screen_offset(pos)));
         for b in s.as_bytes() {
@@ -99,14 +90,10 @@ pub fn print(s: &str) {
 }
 
 pub fn clear() {
-    unsafe{
+    unsafe {
         let vidmem = VIDEO_ADDRESS as *mut u8;
-        memset(
-            vidmem,
-            0,
-            (MAX_COLS as usize) * (MAX_ROWS as usize) * 2
-        );
-        set_cursor(get_screen_offset((0,0)));
+        memset(vidmem, 0, (MAX_COLS as usize) * (MAX_ROWS as usize) * 2);
+        set_cursor(get_screen_offset((0, 0)));
     }
 }
 
