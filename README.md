@@ -14,7 +14,7 @@ you'll need
     grub-mkrescue
     libisoburn
 
-copy to the root of this repo:
+copy(or simlink) to the root of this repo:
 
 - [libcore]
 - [rlibc]
