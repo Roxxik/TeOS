@@ -167,6 +167,8 @@ init_stack:
 .section .data
 .globl kernel_base
 kernel_base:  .quad KERNEL_BASE
+.globl kernel_end
+kernel_end:   .quad kernel_endPTR - KERNEL_BASE
 mboot_sig:    .quad 0
 mboot_ptr:    .quad 0
 
@@ -186,3 +188,4 @@ GDT:
         .long 0x00000000, 0x0020FA00    /* 0x28: 64-bit User Code       */
         .long 0x00000000, 0x0000F200    /* 0x30: User Data (64 version) */
 GDTEnd:
+kernel_endPTR:

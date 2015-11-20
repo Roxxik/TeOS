@@ -3,12 +3,11 @@
 pub type PAddr = u64;
 pub type VAddr = usize;
 
-extern {
-    pub static kernel_base: u64; /* from boot.s */
-}
+pub const KERNEL_BASE: u64 = 0xFFFFFFFF80000000; /* from boot.s */
+
 
 pub fn phys_to_virt(p_addr: PAddr) -> VAddr {
-    (p_addr + kernel_base) as usize
+    (p_addr + KERNEL_BASE) as usize
 }
 
 pub const BASE_PAGE_SIZE: u64 = 1024 * 4; // 4 KiB

@@ -41,7 +41,7 @@ MAIN=src/mod.rs
 
 OBJS=kernel.o $(BOOT) $(LIBCORE) $(RLIBC) $(BITFLAGS)
 
-BIN = teos.kernel
+BIN = teos.elf
 
 #ISO
 GRUBCFG=src/boot/grub.cfg
@@ -83,13 +83,13 @@ $(ISO): $(BIN) $(GRUBCFG)
 $(BIN): $(OBJS) $(LINKSCRIPT)
 	$(LD) -o $@ $(LINKFLAGS) $(OBJS)
 
-$(LIBCORE): $(LIBCORESRC) $(TARGETSPEC)
+$(LIBCORE): $(LIBCORESRC) $(TARGET)
 	$(RUSTC) $(RUSTFLAGS) -o $@ --crate-type=lib --emit=link $(LIBCORESRC)
 
-$(RLIBC): $(RLIBCSRC) $(LIBCORE) $(TARGETSPEC)
+$(RLIBC): $(RLIBCSRC) $(LIBCORE) $(TARGET)
 	$(RUSTC) $(RUSTFLAGS) -o $@ --crate-type=lib --emit=link --extern core=$(LIBCORE) $(RLIBCSRC)
 
-$(BITFLAGS): $(BITFLAGSSRC) $(LIBCORE) $(TARGETSPEC)
+$(BITFLAGS): $(BITFLAGSSRC) $(LIBCORE) $(TARGET)
 	$(RUSTC) $(RUSTFLAGS) -o $@ --crate-type=lib --emit=link --extern core=$(LIBCORE) $(BITFLAGSSRC)
 
 kernel.o: $(SRCS) $(LIBCORE) $(RLIBC) $(BITFLAGS) $(TARGET)

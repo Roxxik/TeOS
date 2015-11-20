@@ -18,7 +18,7 @@ extern {
 }
 
 unsafe fn print_char(c: u8, attr: Option<u8>, pos: Option<(u8, u8)>) {
-    let vidmem = (VIDEO_ADDRESS + paging::kernel_base) as *mut u8;
+    let vidmem = (VIDEO_ADDRESS + paging::KERNEL_BASE) as *mut u8;
     let attr = attr.unwrap_or(WHITE_ON_BLACK);
 
     let mut offset: isize = pos.map_or_else(wrap_get_cursor, get_screen_offset);

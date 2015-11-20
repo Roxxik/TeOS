@@ -35,7 +35,7 @@ SECTIONS {
 	.bss : AT(ADDR(.bss) - KERNEL_BASE) {
 		*(.bss .bss.*)
 	}
-
+	
 	/DISCARD/ : {
 		*(.note .note.*)
 	}

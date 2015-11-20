@@ -3,6 +3,10 @@ pub use prelude::*;
 use mm::paging;
 use super::multiboot;
 
+extern {
+	static kernel_end: u64;
+}
+
 fn print_mem(base: u64, length: u64, mem_type: multiboot::MemType) {
     log!("base: 0x{:X}, len: 0x{:X}, type: {:?}",
          base,
@@ -16,13 +20,13 @@ fn print_mem(base: u64, length: u64, mem_type: multiboot::MemType) {
 extern "C" fn kmain(mboot_sig: u64, mboot_ptr: u64, pml4t_ptr: u64) -> ! {
     log!("Hello World, this is kernel");
     log!("Hello {0}, with println parameter \"{0}\"", "World");
-    log!("kernel base address 0x{:X}", paging::kernel_base);
-    //log!("blub                0x{:X}", kernel_end);
+    log!("kernel base address 0x{:X}", paging::KERNEL_BASE);
+    log!("kernel ends at      0x{:X}", kernel_end);
 
 
     if multiboot::SIGNATURE_RAX != mboot_sig {
         log!("not booted by multiboot!");
-        log!("excpected: 0x{:X}, was: 0x{:X}",
+        log!("expected: 0x{:X}, was: 0x{:X}",
              multiboot::SIGNATURE_RAX,
              mboot_sig);
         hang();
